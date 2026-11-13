@@ -4,22 +4,23 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         sb: {
-          bg: '#0B1220',
-          sidebar: '#0F172A',
-          card: '#111C30',
-          elevated: '#17243A',
-          primary: '#38BDF8',
-          secondary: '#6366F1',
-          success: '#22C55E',
-          warning: '#F59E0B',
-          critical: '#EF4444',
-          text: '#F8FAFC',
-          'text-secondary': '#94A3B8',
-          border: '#243249',
+          bg: 'var(--sb-bg)',
+          sidebar: 'var(--sb-sidebar)',
+          card: 'var(--sb-card)',
+          elevated: 'var(--sb-elevated)',
+          primary: 'var(--sb-primary)',
+          secondary: 'var(--sb-secondary)',
+          success: 'var(--sb-success)',
+          warning: 'var(--sb-warning)',
+          critical: 'var(--sb-critical)',
+          text: 'var(--sb-text)',
+          'text-secondary': 'var(--sb-text-secondary)',
+          border: 'var(--sb-border)',
         }
       },
       fontFamily: {

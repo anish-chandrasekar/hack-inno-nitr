@@ -22,6 +22,24 @@ import { CommandBar } from '../components/ui/CommandBar';
 import { formatCurrency, formatDateTime } from '../lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
+const CustomPieTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const item = payload[0];
+    return (
+      <div className="card p-3 shadow-2xl border-2 border-sb-primary bg-sb-card text-xs space-y-1 z-50 pointer-events-none">
+        <div className="font-bold text-sb-text">{item.name}</div>
+        <div className="font-mono text-sb-primary font-bold text-sm">
+          {formatCurrency(item.value)}
+        </div>
+        <div className="text-[10px] text-sb-text-secondary">
+          {((item.value / 1000000) * 100).toFixed(1)}% of ₹10L budget
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export const OverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const { data, loading, error } = useApi(() => api.getDashboard());
@@ -212,10 +230,7 @@ export const OverviewPage: React.FC = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(val: number) => formatCurrency(val)}
-                  contentStyle={{ backgroundColor: '#17243A', borderColor: '#243249', borderRadius: '8px' }}
-                />
+                <Tooltip content={<CustomPieTooltip />} />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute text-center pointer-events-none">

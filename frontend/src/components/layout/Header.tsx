@@ -1,9 +1,32 @@
-import React, { useState } from 'react';
-import { Search, Bell, Sparkles, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Bell, Sparkles, RefreshCw, Sun, Moon } from 'lucide-react';
 import { api } from '../../services/api';
 
 export const Header: React.FC = () => {
   const [resetting, setResetting] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('sb_theme') as 'dark' | 'light' | null;
+    const initialTheme = saved || 'dark';
+    setTheme(initialTheme);
+    if (initialTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('sb_theme', nextTheme);
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
 
   const handleReset = async () => {
     try {
@@ -18,7 +41,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-16 bg-sb-sidebar/80 backdrop-blur-md border-b border-sb-border sticky top-0 z-20 px-6 flex items-center justify-between">
+    <header className="h-16 bg-sb-sidebar/90 backdrop-blur-md border-b border-sb-border sticky top-0 z-20 px-6 flex items-center justify-between transition-colors">
       <div className="flex items-center space-x-4">
         <div>
           <span className="font-semibold text-sb-text text-sm tracking-wide">INNOVISION 2026</span>
@@ -31,11 +54,30 @@ export const Header: React.FC = () => {
       </div>
 
       <div className="flex items-center space-x-3">
+        {/* Theme Switcher Toggle */}
+        <button
+          onClick={toggleTheme}
+          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-sb-border bg-sb-elevated hover:bg-sb-card text-xs font-medium text-sb-text transition-all cursor-pointer"
+        >
+          {theme === 'dark' ? (
+            <>
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+              <span>Light Mode</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-3.5 h-3.5 text-sb-primary" />
+              <span>Dark Mode</span>
+            </>
+          )}
+        </button>
+
         <button
           onClick={handleReset}
           disabled={resetting}
           title="Reset Demo Environment"
-          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-sb-border bg-sb-elevated hover:bg-sb-card text-xs font-medium text-sb-text-secondary hover:text-sb-text transition-colors"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-sb-border bg-sb-elevated hover:bg-sb-card text-xs font-medium text-sb-text-secondary hover:text-sb-text transition-colors cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
           <span>Reset Demo</span>
