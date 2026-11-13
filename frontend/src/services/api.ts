@@ -19,6 +19,24 @@ export const api = {
   // Sponsors
   getSponsors: () => request<import('../types').Sponsor[]>('/sponsors'),
   getSponsor: (id: number) => request<import('../types').Sponsor>(`/sponsors/${id}`),
+  createSponsor: (data: {
+    name: string;
+    category?: string;
+    tier?: string;
+    contact_name?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    commitment_amount?: number;
+    notes?: string;
+  }) =>
+    request<import('../types').Sponsor>('/sponsors', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  deleteSponsor: (id: number) =>
+    request<{ status: string; id: number }>(`/sponsors/${id}`, {
+      method: 'DELETE',
+    }),
 
   // Sources / Inbox
   getSources: () => request<import('../types').SourceDocument[]>('/sources'),
@@ -53,14 +71,14 @@ export const api = {
   // Approvals
   getApprovals: () => request<import('../types').Proposal[]>('/approvals'),
   approveProposal: (id: number, notes?: string) =>
-    request<import('../types').Approval>(`/approvals/${id}/approve`, {
+    request<any>(`/approvals/${id}/approve`, {
       method: 'POST',
-      body: JSON.stringify({ notes }),
+      body: JSON.stringify({ decision: 'approved', notes: notes || 'Approved by user' }),
     }),
   rejectProposal: (id: number, notes?: string) =>
-    request<import('../types').Approval>(`/approvals/${id}/reject`, {
+    request<any>(`/approvals/${id}/reject`, {
       method: 'POST',
-      body: JSON.stringify({ notes }),
+      body: JSON.stringify({ decision: 'rejected', notes: notes || 'Rejected by user' }),
     }),
 
   // Execution
@@ -85,6 +103,6 @@ export const api = {
   query: (question: string, investigationId?: number) =>
     request<{ answer: string; sources: string[]; confidence: number }>('/query', {
       method: 'POST',
-      body: JSON.stringify({ question, investigation_id: investigationId }),
+      body: JSON.stringify({ query: question, entity_type: investigationId ? String(investigationId) : undefined }),
     }),
 };

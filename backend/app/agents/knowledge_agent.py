@@ -80,7 +80,10 @@ class KnowledgeAgent:
             "entity_resolution_confidence": match_confidence,
             "active_agreements_count": len(agreements),
             "historical_approved_cash": approved_cash,
+            "proposed_financial": proposed_cash,
+            "delta_financial": communication_output.get("delta_financial", -(approved_cash - proposed_cash)),
             "historical_approved_kits": approved_kits,
+            "merchandise_withdrawn_kits": communication_output.get("merchandise_withdrawn_kits", 0),
             "deliverables_linked": [d.title for d in deliverables],
             "detected_conflicts": conflicts,
             "has_conflicts": len(conflicts) > 0

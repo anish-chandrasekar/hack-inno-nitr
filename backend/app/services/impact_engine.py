@@ -9,36 +9,33 @@ from typing import Dict, Any
 
 def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, Any]:
     inv = db.query(Investigation).filter(Investigation.id == investigation_id).first()
-    sponsor_id = 4  # Default to NovaTech in demo scenario
-    if inv and inv.context and "sponsor_id" in inv.context:
-        sponsor_id = inv.context["sponsor_id"]
+    
+    # Extract dynamic figures from investigation context if available
+    context = (inv.context or {}) if inv else {}
+    sponsor_id = context.get("sponsor_id") or 4
 
     sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
     if not sponsor:
-        sponsor = db.query(Sponsor).first()
-        sponsor_id = sponsor.id if sponsor else 1
+        sponsor = db.query(Sponsor).filter(Sponsor.name.ilike("%NovaTech%")).first() or db.query(Sponsor).first()
+        sponsor_id = sponsor.id if sponsor else 4
+
+    # Determine dynamic values from context
+    prev_cash = float(context.get("previous_financial") or 200000.0)
+    prop_cash = float(context.get("proposed_financial") or 50000.0)
+    delta_financial = float(context.get("delta_financial") or (-(prev_cash - prop_cash)))
+    cash_reduction = abs(delta_financial)
+    kits_withdrawn = int(context.get("merchandise_withdrawn_kits") or 0)
 
     # Traverse dependencies from the sponsor
-    cascade = traverse_cascade(db, "sponsor", sponsor_id)
-    
-    # Financial and non-financial gap
-    gaps = calculate_sponsor_gap(db, sponsor_id)
-    cash_reduction = gaps["cash_reduction"]
-    kits_withdrawn = gaps["merchandise_withdrawn"]
+    cascade = traverse_cascade(db, "sponsor", sponsor.id)
 
-    # If no gap found in commitments yet, fallback to NovaTech scenario values
-    if cash_reduction == 0:
-        cash_reduction = 150000.0
-    if kits_withdrawn == 0:
-        kits_withdrawn = 500
-
-    # Collect affected deliverables and tasks
-    affected_deliverables = db.query(Deliverable).filter(Deliverable.sponsor_id == sponsor_id).all()
+    # Collect deliverables and tasks for this sponsor
+    affected_deliverables = db.query(Deliverable).filter(Deliverable.sponsor_id == sponsor.id).all()
     deliverable_ids = [d.id for d in affected_deliverables]
     
     affected_tasks = db.query(Task).filter(
         (Task.related_entity_type == "deliverable") & (Task.related_entity_id.in_(deliverable_ids)) |
-        (Task.related_entity_type == "commitment")
+        ((Task.related_entity_type == "sponsor") & (Task.related_entity_id == sponsor.id))
     ).all()
 
     # Build React Flow graph
@@ -63,23 +60,24 @@ def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, An
     })
 
     # Commitments
-    commitments = db.query(Commitment).filter(Commitment.sponsor_id == sponsor_id).all()
-    for c in commitments:
-        c_node_id = f"commitment_{c.id}"
+    commitments = db.query(Commitment).filter(Commitment.sponsor_id == sponsor.id).all()
+    if not commitments:
+        # Create virtual commitment node for visualization
+        c_node_id = f"commitment_dynamic_{sponsor.id}"
         nodes.append({
             "id": c_node_id,
             "type": "commitmentNode",
-            "label": f"{c.commitment_type.capitalize()}: {c.description}",
+            "label": f"Financial: {sponsor.name} Commitment",
             "entity_type": "commitment",
-            "entity_id": c.id,
+            "entity_id": sponsor.id,
             "impact_level": "direct",
-            "status": c.status,
+            "status": "revision_pending",
             "data": {
-                "type": c.commitment_type,
-                "original": c.original_value,
-                "proposed": c.proposed_value,
-                "unit": c.unit,
-                "reduction": (c.current_approved_value or 0) - (c.proposed_value or 0)
+                "type": "financial",
+                "original": prev_cash,
+                "proposed": prop_cash,
+                "unit": "INR",
+                "reduction": cash_reduction
             }
         })
         edges.append({
@@ -88,9 +86,37 @@ def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, An
             "target": c_node_id,
             "relationship_type": "SPONSOR_HAS_COMMITMENT",
             "label": "Has Commitment",
-            "description": f"Sponsor commitment of {c.original_value} {c.unit}",
+            "description": f"Sponsorship commitment: ₹{prev_cash:,.0f}",
             "source_reference": "Agreement Clause"
         })
+    else:
+        for c in commitments:
+            c_node_id = f"commitment_{c.id}"
+            nodes.append({
+                "id": c_node_id,
+                "type": "commitmentNode",
+                "label": f"{c.commitment_type.capitalize()}: {c.description}",
+                "entity_type": "commitment",
+                "entity_id": c.id,
+                "impact_level": "direct",
+                "status": c.status,
+                "data": {
+                    "type": c.commitment_type,
+                    "original": c.original_value or prev_cash,
+                    "proposed": c.proposed_value or prop_cash,
+                    "unit": c.unit,
+                    "reduction": cash_reduction if c.commitment_type == "financial" else kits_withdrawn
+                }
+            })
+            edges.append({
+                "id": f"e_sp_{c_node_id}",
+                "source": f"sponsor_{sponsor.id}",
+                "target": c_node_id,
+                "relationship_type": "SPONSOR_HAS_COMMITMENT",
+                "label": "Has Commitment",
+                "description": f"Sponsor commitment of {c.original_value or prev_cash} {c.unit}",
+                "source_reference": "Agreement Clause"
+            })
 
     # Deliverables
     for d in affected_deliverables:
@@ -137,11 +163,10 @@ def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, An
                 "deadline": t.deadline
             }
         })
-        # Connect to parent deliverable or commitment
         parent_node_id = f"{t.related_entity_type}_{t.related_entity_id}"
         edges.append({
             "id": f"e_{parent_node_id}_{t_node_id}",
-            "source": parent_node_id,
+            "source": parent_node_id if any(n["id"] == parent_node_id for n in nodes) else f"sponsor_{sponsor.id}",
             "target": t_node_id,
             "relationship_type": "REQUIRES_OPERATIONAL_TASK",
             "label": "Operational Task",
@@ -167,11 +192,11 @@ def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, An
                 "deficit": cash_reduction
             }
         })
-        financial_c = [c for c in commitments if c.commitment_type == "financial"]
-        if financial_c:
+        first_c = [n for n in nodes if n["entity_type"] == "commitment"]
+        if first_c:
             edges.append({
                 "id": f"e_comm_{b_node_id}",
-                "source": f"commitment_{financial_c[0].id}",
+                "source": first_c[0]["id"],
                 "target": b_node_id,
                 "relationship_type": "COMMITMENT_AFFECTS_BUDGET",
                 "label": "Funds Budget Line",
@@ -179,44 +204,44 @@ def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, An
                 "source_reference": "Treasurer Ledger"
             })
 
-    # Adaptive Recovery Plans (Differentiator C)
+    # Dynamic Adaptive Recovery Plans (Differentiator C)
     recovery_plans = [
         {
             "id": "plan_a",
             "name": "Plan A: Replacement Sponsor Acquisition",
-            "description": "Fast-track 2 waitlisted IoT/Hardware sponsors (e.g. NextGen Devices, IoTWorks) to co-fund ₹1,50,000 cash and source alternative delegate backpack kit support.",
-            "expected_financial_impact": 150000.0,
+            "description": f"Fast-track waitlisted co-sponsors to co-fund the ₹{cash_reduction:,.0f} shortfall and maintain event scope.",
+            "expected_financial_impact": cash_reduction,
             "affected_tasks": [
-                "Issue urgent sponsorship deck to Waitlist Tier B",
-                "Reallocate Booth 12 in Hall A to replacement partner",
-                "Update delegate kit backpack branding order"
+                f"Issue urgent outreach deck to Tier {sponsor.tier} waitlist",
+                f"Reallocate {sponsor.name} promotional inventory to replacement partner",
+                "Update vendor packaging order"
             ],
             "advantages": [
                 "Zero cuts to student fest experience or prizes",
                 "Full ₹10,00,000 event scale preserved",
-                "Maintains delegate kit distribution"
+                "Maintains all planned festival activities"
             ],
             "risks": [
                 "Requires rapid signing within 5 business days",
-                "Logos on backdrop must be finalized before printing deadline (March 9)"
+                "Stage logos must be locked before printing deadline"
             ],
             "tradeoffs": [
                 "Extra marketing effort for corporate outreach team",
                 "Splits booth space if multiple co-sponsors join"
             ],
             "assumptions": [
-                "2 warm prospective sponsors on waitlist confirm participation"
+                "Warm prospective sponsors on waitlist confirm participation"
             ]
         },
         {
             "id": "plan_b",
             "name": "Plan B: Strategic Expenditure Optimization",
-            "description": "Absorb the ₹1,50,000 shortfall internally: reduce VIP hospitality & food buffer by ₹60,000, utilize ₹50,000 Contingency Reserve, and simplify stage backdrop production by ₹40,000.",
+            "description": f"Absorb the ₹{cash_reduction:,.0f} deficit internally: reduce catering & hospitality buffers and rebalance contingency reserves.",
             "expected_financial_impact": 0.0,
             "affected_tasks": [
-                "Renegotiate catering order with vendor to ₹90,000",
-                "Deplete Emergency Contingency Reserve to ₹0",
-                "Revise main stage backdrop print dimensions"
+                f"Trim food and hospitality allocations by ₹{cash_reduction * 0.6:,.0f}",
+                f"Utilize emergency contingency buffer of ₹{cash_reduction * 0.4:,.0f}",
+                "Revise main stage production flex dimensions"
             ],
             "advantages": [
                 "Immediate self-contained resolution without relying on external sales",
@@ -224,43 +249,42 @@ def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, An
                 "Guaranteed budget balance"
             ],
             "risks": [
-                "Zero safety margin left in contingency reserve",
-                "Slight reduction in VIP guest hospitality package"
+                "Depletes contingency reserve safety margin",
+                "Minor reduction in hospitality tier buffer"
             ],
             "tradeoffs": [
                 "Catering choices streamlined",
-                "No funds available for last-minute equipment emergencies"
+                "Limited reserve remaining for unexpected equipment failure"
             ],
             "assumptions": [
-                "Vendor agrees to downward revision of catering headcount"
+                "Vendors accept downward adjustments to headcounts"
             ]
         },
         {
             "id": "plan_c",
-            "name": "Plan C: Sponsor Benefit Renegotiation & Downgrade",
-            "description": "Accept NovaTech at the proposed ₹50,000 contribution. Formally reclassify them from Gold to Silver tier. Downscale deliverables proportionally: retain social media post, remove main stage backdrop logo, reallocate prime Booth 12 to open area.",
-            "expected_financial_impact": -150000.0,
+            "name": f"Plan C: {sponsor.name} Benefit Renegotiation",
+            "description": f"Accept {sponsor.name} at the revised ₹{prop_cash:,.0f} contribution. Downscale their deliverable package proportionally to reflect revised commitment.",
+            "expected_financial_impact": -cash_reduction,
             "affected_tasks": [
-                "Draft formal contract amendment for Silver Tier at ₹50,000",
-                "Remove NovaTech logo from main stage backdrop template",
-                "Reassign Hall A Booth 12 to TechCorp showcase lounge",
-                "Notify logistics vendor to cancel 500 kit procurement expectation"
+                f"Draft formal contract amendment for revised ₹{prop_cash:,.0f} grant",
+                f"Adjust {sponsor.name} branding footprint across materials",
+                "Reassign premium floor real estate to title partners"
             ],
             "advantages": [
-                "Preserves long-term corporate relationship with NovaTech",
+                f"Preserves long-term institutional relationship with {sponsor.name}",
                 "Provides clean contractual clarity without legal friction",
-                "Releases premium stage and booth real estate"
+                "Releases prime festival real estate"
             ],
             "risks": [
-                "Remaining ₹1,50,000 gap still needs bridging via contingency or tickets",
-                "500 delegate kits will not be distributed unless alternate kits are bought"
+                f"Remaining ₹{cash_reduction:,.0f} deficit must be balanced through alternate lines",
+                "Requires attendee kit adjustment"
             ],
             "tradeoffs": [
-                "NovaTech branding presence reduced significantly",
-                "Net budget deficit must be partially funded via registration ticket sales"
+                f"{sponsor.name} branding presence reduced",
+                "Net budget deficit must be absorbed elsewhere"
             ],
             "assumptions": [
-                "NovaTech accepts Silver tier deliverables without objection"
+                f"{sponsor.name} accepts revised deliverable footprint"
             ]
         }
     ]
@@ -273,20 +297,20 @@ def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, An
             "changes": [
                 {
                     "field": "Financial Contribution",
-                    "old_value": "₹2,00,000 (Gold Tier Commitment)",
-                    "new_value": "₹50,000 (Proposed Revision)",
-                    "change_type": "REDUCTION (-₹1,50,000)"
+                    "old_value": f"₹{prev_cash:,.0f} ({sponsor.tier} Commitment)",
+                    "new_value": f"₹{prop_cash:,.0f} (Proposed Revision)",
+                    "change_type": f"REDUCTION (-₹{cash_reduction:,.0f})" if delta_financial < 0 else "AMENDMENT"
                 },
                 {
                     "field": "In-Kind Merchandise",
-                    "old_value": "500 Delegate Kits (Backpack & Metal Bottle)",
-                    "new_value": "0 Kits (Withdrawn)",
-                    "change_type": "WITHDRAWAL (-500 kits)"
+                    "old_value": f"{kits_withdrawn or 500} Delegate Kits",
+                    "new_value": f"{0 if kits_withdrawn > 0 else 'Unchanged'} Kits",
+                    "change_type": f"WITHDRAWAL (-{kits_withdrawn} kits)" if kits_withdrawn > 0 else "CONFIRMED"
                 },
                 {
                     "field": "Sponsorship Tier Status",
-                    "old_value": "Gold Partner (Active Contract)",
-                    "new_value": "Pending Approval / Tier Downgrade",
+                    "old_value": f"{sponsor.tier} Partner (Active Contract)",
+                    "new_value": "Pending Approval / Tier Review",
                     "change_type": "RECLASSIFICATION_REQUIRED"
                 }
             ]
@@ -297,10 +321,10 @@ def generate_impact_analysis(db: Session, investigation_id: int) -> Dict[str, An
         },
         "impact_report": {
             "financial_impact": -cash_reduction,
-            "non_cash_withdrawn": [f"{kits_withdrawn} Delegate Premium Merchandise Kits"],
+            "non_cash_withdrawn": [f"{kits_withdrawn} Delegate Premium Merchandise Kits"] if kits_withdrawn > 0 else ["None"],
             "affected_deliverables": affected_deliverables,
             "affected_tasks": affected_tasks,
-            "affected_deadlines": ["2026-03-05 (Packaging vendor)", "2026-03-09 (Backdrop print)", "2026-03-12 (Socials)"],
+            "affected_deadlines": ["2026-03-05 (Vendor Packaging)", "2026-03-09 (Backdrop Flex Printing)", "2026-03-12 (Socials)"],
             "budget_gap": cash_reduction,
             "unresolved_dependencies": len(edges),
             "confidence": 0.98

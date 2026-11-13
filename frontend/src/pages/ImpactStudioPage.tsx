@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ReactFlow, 
   Background, 
@@ -71,18 +71,27 @@ const nodeTypes = {
 
 export const ImpactStudioPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlInvId = searchParams.get('investigation_id');
   const { data: investigations } = useApi(() => api.getInvestigations());
-  const [selectedInvId, setSelectedInvId] = useState<number>(1);
+  const [selectedInvId, setSelectedInvId] = useState<number>(urlInvId ? Number(urlInvId) : 1);
   const [impactData, setImpactData] = useState<ImpactAnalysis | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPlanTab, setSelectedPlanTab] = useState<'plan_a' | 'plan_b' | 'plan_c'>('plan_a');
   const [selectedNodeData, setSelectedNodeData] = useState<any>(null);
 
   useEffect(() => {
-    if (investigations && investigations.length > 0) {
+    if (urlInvId) {
+      setSelectedInvId(Number(urlInvId));
+    } else if (investigations && investigations.length > 0) {
       setSelectedInvId(investigations[0].id);
     }
-  }, [investigations]);
+  }, [urlInvId, investigations]);
+
+  const handleSelectInvestigation = (id: number) => {
+    setSelectedInvId(id);
+    setSearchParams({ investigation_id: String(id) });
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -191,6 +200,19 @@ export const ImpactStudioPage: React.FC = () => {
             <span className="text-xs text-sb-text-secondary font-mono">
               Investigation #{selectedInvId}
             </span>
+            {investigations && investigations.length > 1 && (
+              <select
+                value={selectedInvId}
+                onChange={(e) => handleSelectInvestigation(Number(e.target.value))}
+                className="bg-sb-elevated border border-sb-border rounded px-2 py-0.5 text-xs text-sb-text font-mono focus:outline-none focus:border-sb-primary ml-2"
+              >
+                {investigations.map((inv) => (
+                  <option key={inv.id} value={inv.id}>
+                    Investigation #{inv.id}: {inv.summary ? inv.summary.slice(0, 35) + '...' : `Case #${inv.id}`}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-sb-text mt-1">
             Impact Studio & Dependency Intelligence
@@ -205,7 +227,7 @@ export const ImpactStudioPage: React.FC = () => {
           className="btn-primary text-xs flex items-center space-x-1.5 shadow-lg shadow-sb-primary/20 self-start md:self-auto"
         >
           <ShieldAlert className="w-3.5 h-3.5" />
-          <span>Proceed to Human Approvals (5 Staged)</span>
+          <span>Proceed to Human Approvals</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>

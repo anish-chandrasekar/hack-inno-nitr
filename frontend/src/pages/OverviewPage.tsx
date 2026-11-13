@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   DollarSign, 
@@ -9,7 +9,11 @@ import {
   ArrowUpRight,
   ShieldAlert,
   Zap,
-  Clock
+  Clock,
+  X,
+  ExternalLink,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import { api } from '../services/api';
@@ -21,6 +25,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 export const OverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const { data, loading, error } = useApi(() => api.getDashboard());
+  const [showAtRiskModal, setShowAtRiskModal] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
 
   if (loading) {
     return (
@@ -46,6 +52,53 @@ export const OverviewPage: React.FC = () => {
   }));
 
   const COLORS = ['#38BDF8', '#6366F1', '#22C55E', '#F59E0B', '#EC4899', '#A855F7', '#14B8A6', '#F97316'];
+
+  const atRiskDeliverablesList = [
+    {
+      id: 1,
+      title: 'Logo Placement on Main Stage',
+      sponsor: 'NovaTech Pvt Ltd',
+      tier: 'Gold Sponsor',
+      deadline: '2026-03-10',
+      owner: 'Kavita S. (Design Lead)',
+      department: 'Creative & Stage Production',
+      risk: 'CRITICAL',
+      impact: 'Backdrop proof print deadline locked; logo inclusion on hold pending approval of commitment amendment.'
+    },
+    {
+      id: 2,
+      title: 'Three Social Media Promotional Posts',
+      sponsor: 'NovaTech Pvt Ltd',
+      tier: 'Gold Sponsor',
+      deadline: '2026-03-12',
+      owner: 'Aman Verma (Socials)',
+      department: 'Marketing & Outreach',
+      risk: 'HIGH',
+      impact: 'Marketing calendar slot blocked; promotional copy drafted but release withheld.'
+    },
+    {
+      id: 3,
+      title: 'Sponsor Exhibition Booth (Hall A, Stall 12)',
+      sponsor: 'NovaTech Pvt Ltd',
+      tier: 'Gold Sponsor',
+      deadline: '2026-03-18',
+      owner: 'Rohan P. (Stall Manager)',
+      department: 'Logistics & Infrastructure',
+      risk: 'HIGH',
+      impact: 'Stall reservation in prime tech pavilion; waitlist sponsors ready to reoccupy if downgraded.'
+    },
+    {
+      id: 4,
+      title: 'Brochure & Event Handbook Full-Page Feature',
+      sponsor: 'NovaTech Pvt Ltd',
+      tier: 'Gold Sponsor',
+      deadline: '2026-03-08',
+      owner: 'Print Coordinator',
+      department: 'Editorial & Print Media',
+      risk: 'MEDIUM',
+      impact: 'Handbook press run scheduled; sponsor profile may need replacement or scaling to half-page.'
+    }
+  ];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -77,7 +130,7 @@ export const OverviewPage: React.FC = () => {
       {/* Global AI Command Bar */}
       <CommandBar />
 
-      {/* 6 Key Performance Indicator Cards */}
+      {/* 6 Key Performance Indicator Cards (All Clickable) */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KPICard
           title="Committed Sponsorship"
@@ -85,13 +138,15 @@ export const OverviewPage: React.FC = () => {
           subtitle="8 Active Partners"
           icon={DollarSign}
           status="normal"
+          onClick={() => navigate('/sponsors')}
         />
         <KPICard
           title="Received Funds"
           value={formatCurrency(kpis.actual_sponsorship_received)}
-          subtitle="60% of total"
+          subtitle="Collected so far"
           icon={CheckCircle2}
           status="success"
+          onClick={() => navigate('/sponsors')}
         />
         <KPICard
           title="Budget Remaining"
@@ -99,20 +154,23 @@ export const OverviewPage: React.FC = () => {
           subtitle="Of ₹10,00,000"
           icon={TrendingDown}
           status="normal"
+          onClick={() => setShowBudgetModal(true)}
         />
         <KPICard
           title="At-Risk Deliverables"
           value={kpis.at_risk_deliverables}
-          subtitle="Requires attention"
+          subtitle="Click to view all"
           icon={AlertTriangle}
           status={kpis.at_risk_deliverables > 0 ? 'critical' : 'normal'}
+          onClick={() => setShowAtRiskModal(true)}
         />
         <KPICard
           title="Pending Approvals"
           value={kpis.pending_approvals}
-          subtitle="High consequence"
+          subtitle="Click to review"
           icon={ShieldAlert}
           status={kpis.pending_approvals > 0 ? 'warning' : 'normal'}
+          onClick={() => navigate('/approvals')}
         />
         <KPICard
           title="Active Workflows"
@@ -120,15 +178,22 @@ export const OverviewPage: React.FC = () => {
           subtitle="Multi-agent teams"
           icon={Bot}
           status="normal"
+          onClick={() => navigate('/agents')}
         />
       </div>
 
       {/* Main Grid: Charts & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Budget Allocation Chart */}
-        <div className="card p-5 lg:col-span-1 flex flex-col justify-between">
+        <div 
+          onClick={() => setShowBudgetModal(true)}
+          className="card p-5 lg:col-span-1 flex flex-col justify-between cursor-pointer hover:border-sb-primary/40 transition-all group"
+        >
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-sb-text">Budget Allocation</h3>
+            <h3 className="text-sm font-semibold text-sb-text group-hover:text-sb-primary transition-colors flex items-center space-x-1.5">
+              <span>Budget Allocation</span>
+              <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </h3>
             <span className="text-xs text-sb-text-secondary">₹10,00,000 Target</span>
           </div>
           <div className="h-56 relative flex items-center justify-center">
@@ -182,7 +247,13 @@ export const OverviewPage: React.FC = () => {
             {recent_alerts.map((alert) => (
               <div
                 key={alert.id}
-                onClick={() => alert.entity_type === 'sponsor' && navigate('/impact')}
+                onClick={() => {
+                  if (alert.entity_type === 'deliverable') {
+                    setShowAtRiskModal(true);
+                  } else {
+                    navigate('/impact');
+                  }
+                }}
                 className="p-3.5 rounded-lg border border-sb-border bg-sb-elevated/50 hover:bg-sb-elevated cursor-pointer transition-all flex items-start justify-between group"
               >
                 <div className="flex items-start space-x-3">
@@ -227,7 +298,7 @@ export const OverviewPage: React.FC = () => {
             onClick={() => navigate('/sponsors')}
             className="text-xs text-sb-primary font-medium hover:underline"
           >
-            View All Sponsors →
+            Manage Sponsors in Hub →
           </button>
         </div>
 
@@ -272,6 +343,126 @@ export const OverviewPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* At-Risk Deliverables Inspection Modal */}
+      {showAtRiskModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card w-full max-w-3xl p-6 space-y-4 bg-sb-elevated border-sb-border shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-sb-border pb-3">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-sb-critical" />
+                <div>
+                  <h3 className="text-base font-bold text-sb-text">At-Risk Promotional Deliverables</h3>
+                  <p className="text-xs text-sb-text-secondary">
+                    Deliverables directly endangered by sponsor revisions and vendor deadlines
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAtRiskModal(false)}
+                className="text-sb-text-secondary hover:text-sb-text"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {atRiskDeliverablesList.map((deliv) => (
+                <div
+                  key={deliv.id}
+                  className="p-4 rounded-xl bg-sb-card border border-sb-border hover:border-sb-border/90 space-y-2 text-xs"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-sb-text text-sm">{deliv.title}</span>
+                      <span className="badge-critical text-[10px]">{deliv.risk} RISK</span>
+                    </div>
+                    <span className="font-mono text-sb-warning text-xs font-semibold">
+                      Due: {deliv.deadline}
+                    </span>
+                  </div>
+
+                  <p className="text-sb-text-secondary leading-relaxed bg-sb-elevated p-2.5 rounded-lg border border-sb-border/60">
+                    {deliv.impact}
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-[11px] font-mono text-sb-text-secondary">
+                    <div>Sponsor: <span className="text-sb-text font-medium">{deliv.sponsor}</span></div>
+                    <div>Department: <span className="text-sb-text font-medium">{deliv.department}</span></div>
+                    <div>Lead: <span className="text-sb-text font-medium">{deliv.owner}</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-3 border-t border-sb-border flex items-center justify-between">
+              <span className="text-xs text-sb-text-secondary">
+                View cascading dependency tree in Impact Studio
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setShowAtRiskModal(false)}
+                  className="btn-secondary text-xs"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAtRiskModal(false);
+                    navigate('/impact');
+                  }}
+                  className="btn-primary text-xs flex items-center space-x-1"
+                >
+                  <span>Open Impact Studio</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Budget Details Modal */}
+      {showBudgetModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="card w-full max-w-2xl p-6 space-y-4 bg-sb-elevated border-sb-border shadow-2xl max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-sb-border pb-3">
+              <div>
+                <h3 className="text-base font-bold text-sb-text">INNOVISION 2026 Budget Ledger</h3>
+                <p className="text-xs text-sb-text-secondary">Total Target: ₹10,00,000 INR</p>
+              </div>
+              <button
+                onClick={() => setShowBudgetModal(false)}
+                className="text-sb-text-secondary hover:text-sb-text"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              {budget_lines.map((b) => (
+                <div key={b.id} className="p-3 rounded-lg bg-sb-card border border-sb-border flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-sb-text">{b.category}</div>
+                    <div className="text-[11px] text-sb-text-secondary mt-0.5">{b.subcategory}</div>
+                    <div className="text-[10px] text-sb-primary font-mono mt-0.5">Funded by: {b.funding_source}</div>
+                  </div>
+                  <div className="text-right font-mono">
+                    <div className="text-sb-text font-bold">{formatCurrency(b.allocated_amount)}</div>
+                    <div className="text-[11px] text-sb-text-secondary">Spent: {formatCurrency(b.spent_amount)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-sb-border">
+              <button onClick={() => setShowBudgetModal(false)} className="btn-secondary text-xs">
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

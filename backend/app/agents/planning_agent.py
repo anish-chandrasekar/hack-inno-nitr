@@ -11,9 +11,9 @@ class PlanningAgent:
 
         sponsor_id = knowledge_output.get("sponsor_id", 4)
         sponsor_name = knowledge_output.get("sponsor_canonical_name", "NovaTech Pvt Ltd")
-        approved_cash = knowledge_output.get("historical_approved_cash", 200000.0)
-        proposed_cash = 50000.0
-        reduction = approved_cash - proposed_cash
+        approved_cash = float(knowledge_output.get("historical_approved_cash", 200000.0))
+        proposed_cash = float(knowledge_output.get("proposed_financial", 50000.0))
+        reduction = abs(approved_cash - proposed_cash)
 
         agent_run = AgentRun(
             investigation_id=investigation_id,

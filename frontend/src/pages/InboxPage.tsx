@@ -41,10 +41,28 @@ export const InboxPage: React.FC = () => {
       setIsProcessing(true);
       const inv = await api.runInvestigation(docId);
       await refetch();
-      // Navigate to impact studio with this investigation
-      navigate('/impact');
+      navigate(`/impact?investigation_id=${inv.id}`);
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleViewImpact = async (doc: SourceDocument) => {
+    try {
+      setIsProcessing(true);
+      const invs = await api.getInvestigations();
+      const existing = invs.find((i) => i.trigger_source_id === doc.id);
+      if (existing) {
+        navigate(`/impact?investigation_id=${existing.id}`);
+      } else {
+        const inv = await api.runInvestigation(doc.id);
+        navigate(`/impact?investigation_id=${inv.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+      navigate('/impact');
     } finally {
       setIsProcessing(false);
     }
@@ -175,10 +193,11 @@ export const InboxPage: React.FC = () => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => navigate('/impact')}
+                    onClick={() => handleViewImpact(selectedDoc)}
+                    disabled={isProcessing}
                     className="btn-secondary text-xs flex items-center space-x-1.5 shrink-0"
                   >
-                    <span>View in Impact Studio</span>
+                    <span>{isProcessing ? 'Analyzing Context...' : 'View in Impact Studio'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 )}

@@ -9,7 +9,9 @@ import {
   ArrowRight, 
   DollarSign, 
   FileText,
-  RotateCcw
+  RotateCcw,
+  CheckCircle2,
+  Info
 } from 'lucide-react';
 import { useApi } from '../hooks/useApi';
 import { api } from '../services/api';
@@ -20,14 +22,20 @@ export const ApprovalsPage: React.FC = () => {
   const navigate = useNavigate();
   const { data: proposals, loading, refetch } = useApi(() => api.getApprovals());
   const [actingId, setActingId] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'info'; text: string } | null>(null);
 
   const handleApprove = async (id: number) => {
     try {
       setActingId(id);
       await api.approveProposal(id, 'Approved by Organising Secretary via Command Center');
+      setFeedback({
+        type: 'success',
+        text: `Proposal #${id} successfully authorized! Execution Agent mutated state and Verification Agent confirmed invariants in database.`
+      });
       await refetch();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setFeedback({ type: 'info', text: `Approval note: ${e?.message || 'Processed'}` });
     } finally {
       setActingId(null);
     }
@@ -37,9 +45,14 @@ export const ApprovalsPage: React.FC = () => {
     try {
       setActingId(id);
       await api.rejectProposal(id, 'Rejected by human operator: retains existing agreement.');
+      setFeedback({
+        type: 'info',
+        text: `Proposal #${id} rejected. Underlying contracts and commitments remain strictly untouched.`
+      });
       await refetch();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setFeedback({ type: 'info', text: `Rejection note: ${e?.message || 'Processed'}` });
     } finally {
       setActingId(null);
     }
@@ -79,6 +92,30 @@ export const ApprovalsPage: React.FC = () => {
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
+
+      {/* Action Feedback Banner */}
+      {feedback && (
+        <div className={`p-4 rounded-xl border flex items-center justify-between text-xs animate-in fade-in slide-in-from-top-1 duration-200 ${
+          feedback.type === 'success' 
+            ? 'bg-sb-success/15 border-sb-success/30 text-sb-success' 
+            : 'bg-sb-primary/15 border-sb-primary/30 text-sb-primary'
+        }`}>
+          <div className="flex items-center space-x-2.5">
+            {feedback.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-sb-success" />
+            ) : (
+              <Info className="w-4 h-4 shrink-0 text-sb-primary" />
+            )}
+            <span className="font-medium text-sb-text">{feedback.text}</span>
+          </div>
+          <button
+            onClick={() => setFeedback(null)}
+            className="text-sb-text-secondary hover:text-sb-text font-bold ml-4"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Risk Policy Banner */}
       <div className="card p-4 bg-sb-elevated/40 border-sb-border flex items-center justify-between text-xs">
@@ -143,7 +180,7 @@ export const ApprovalsPage: React.FC = () => {
                       <button
                         onClick={() => handleReject(p.id)}
                         disabled={isActing}
-                        className="px-3 py-1.5 rounded-lg border border-sb-critical/40 bg-sb-critical/10 text-sb-critical hover:bg-sb-critical/20 font-medium text-xs flex items-center space-x-1 transition-colors"
+                        className="px-3 py-1.5 rounded-lg border border-sb-critical/40 bg-sb-critical/10 text-sb-critical hover:bg-sb-critical/20 font-medium text-xs flex items-center space-x-1 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         <X className="w-3.5 h-3.5" />
                         <span>Reject</span>
@@ -151,7 +188,7 @@ export const ApprovalsPage: React.FC = () => {
                       <button
                         onClick={() => handleApprove(p.id)}
                         disabled={isActing}
-                        className="px-4 py-1.5 rounded-lg bg-sb-success text-sb-bg hover:bg-sb-success/90 font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-sb-success/20 transition-all"
+                        className="px-4 py-1.5 rounded-lg bg-sb-success text-sb-bg hover:bg-sb-success/90 font-bold text-xs flex items-center space-x-1.5 shadow-md shadow-sb-success/20 transition-all cursor-pointer disabled:opacity-50"
                       >
                         <Check className="w-3.5 h-3.5 stroke-[3]" />
                         <span>{isActing ? 'Executing & Verifying...' : 'Authorize & Execute'}</span>

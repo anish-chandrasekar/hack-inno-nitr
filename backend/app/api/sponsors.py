@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import Sponsor, Commitment, Deliverable, Agreement
+from app.models import Sponsor, Commitment, Deliverable, Agreement, Dependency, AuditLog, Event
+from app.schemas.requests import CreateSponsorRequest
+from datetime import datetime, timezone
 
 router = APIRouter(tags=["sponsors"])
 
@@ -56,6 +58,91 @@ def list_sponsors(db: Session = Depends(get_db)):
             ]
         })
     return results
+
+@router.post("/sponsors")
+def create_sponsor(payload: CreateSponsorRequest, db: Session = Depends(get_db)):
+    event = db.query(Event).first()
+    event_id = event.id if event else 1
+
+    sp = Sponsor(
+        event_id=event_id,
+        name=payload.name.strip(),
+        category=payload.category,
+        tier=payload.tier,
+        contact_name=payload.contact_name,
+        contact_email=payload.contact_email,
+        contact_phone=payload.contact_phone,
+        status="active",
+        risk_level="low",
+        notes=payload.notes or f"Onboarded as {payload.tier} partner.",
+    )
+    db.add(sp)
+    db.flush()
+
+    if payload.commitment_amount > 0:
+        comm = Commitment(
+            sponsor_id=sp.id,
+            commitment_type="financial",
+            description=f"{payload.tier} Tier Financial Commitment",
+            original_value=payload.commitment_amount,
+            current_approved_value=payload.commitment_amount,
+            proposed_value=payload.commitment_amount,
+            unit="INR",
+            status="confirmed"
+        )
+        db.add(comm)
+
+    audit = AuditLog(
+        actor="Organiser",
+        action="SPONSOR_CREATED",
+        entity_type="sponsor",
+        entity_id=sp.id,
+        description=f"Added new sponsor: {sp.name} ({sp.tier} Tier, ₹{payload.commitment_amount:,.0f})",
+        source="Sponsor Hub UI"
+    )
+    db.add(audit)
+    db.commit()
+    db.refresh(sp)
+
+    return {
+        "id": sp.id,
+        "name": sp.name,
+        "category": sp.category,
+        "tier": sp.tier,
+        "status": sp.status,
+        "risk_level": sp.risk_level
+    }
+
+@router.delete("/sponsors/{sponsor_id}")
+def delete_sponsor(sponsor_id: int, db: Session = Depends(get_db)):
+    s = db.query(Sponsor).filter(Sponsor.id == sponsor_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="Sponsor not found")
+
+    sp_name = s.name
+    # Clean up associated child records
+    db.query(Commitment).filter(Commitment.sponsor_id == sponsor_id).delete()
+    db.query(Deliverable).filter(Deliverable.sponsor_id == sponsor_id).delete()
+    db.query(Agreement).filter(Agreement.sponsor_id == sponsor_id).delete()
+    db.query(Dependency).filter(
+        ((Dependency.source_entity_type == "sponsor") & (Dependency.source_entity_id == sponsor_id)) |
+        ((Dependency.target_entity_type == "sponsor") & (Dependency.target_entity_id == sponsor_id))
+    ).delete()
+
+    db.delete(s)
+
+    audit = AuditLog(
+        actor="Organiser",
+        action="SPONSOR_REMOVED",
+        entity_type="sponsor",
+        entity_id=sponsor_id,
+        description=f"Removed sponsor: {sp_name}",
+        source="Sponsor Hub UI"
+    )
+    db.add(audit)
+    db.commit()
+
+    return {"status": "deleted", "id": sponsor_id, "name": sp_name}
 
 @router.get("/sponsors/{sponsor_id}")
 def get_sponsor(sponsor_id: int, db: Session = Depends(get_db)):

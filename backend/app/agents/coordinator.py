@@ -43,7 +43,8 @@ class CoordinatorAgent:
         planning_output = PlanningAgent.run(db, inv.id, knowledge_output)
         inv.workflow_state = "AWAITING_APPROVAL"
         inv.context = {**inv.context, **planning_output}
-        inv.summary = f"Impact analyzed for {knowledge_output.get('sponsor_canonical_name')}: ₹{knowledge_output.get('historical_approved_cash', 200000) - 50000:,.0f} reduction. 5 proposals staged."
+        reduction_amt = abs(knowledge_output.get('historical_approved_cash', 0) - knowledge_output.get('proposed_financial', 0))
+        inv.summary = f"Impact analyzed for {knowledge_output.get('sponsor_canonical_name')}: ₹{reduction_amt:,.0f} variance. {len(planning_output.get('proposal_ids', []))} proposals staged."
         
         # Mark source document as processed
         doc.processing_status = "processed"
