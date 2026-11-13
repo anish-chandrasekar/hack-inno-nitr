@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #243249 transparent;
+  }
+  
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background-color: #243249;
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-sb-card border border-sb-border rounded-xl;
+  }
+  
+  .card-elevated {
+    @apply bg-sb-elevated border border-sb-border rounded-xl;
+  }
+  
+  .btn-primary {
+    @apply px-4 py-2 bg-sb-primary text-sb-bg font-medium rounded-lg hover:bg-sb-primary/90 transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply px-4 py-2 bg-sb-elevated border border-sb-border text-sb-text font-medium rounded-lg hover:bg-sb-card transition-colors;
+  }
+  
+  .badge {
+    @apply px-2 py-0.5 text-xs font-medium rounded-full;
+  }
+  
+  .badge-success {
+    @apply badge bg-sb-success/15 text-sb-success;
+  }
+  
+  .badge-warning {
+    @apply badge bg-sb-warning/15 text-sb-warning;
+  }
+  
+  .badge-critical {
+    @apply badge bg-sb-critical/15 text-sb-critical;
+  }
+  
+  .badge-info {
+    @apply badge bg-sb-primary/15 text-sb-primary;
+  }
+  
+  .badge-neutral {
+    @apply badge bg-sb-text-secondary/15 text-sb-text-secondary;
+  }
+}
