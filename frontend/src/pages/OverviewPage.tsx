@@ -26,8 +26,17 @@ const CustomPieTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const item = payload[0];
     return (
-      <div className="card p-3 shadow-2xl border-2 border-sb-primary bg-sb-card text-xs space-y-1 z-50 pointer-events-none">
-        <div className="font-bold text-sb-text">{item.name}</div>
+      <div 
+        style={{
+          backgroundColor: 'var(--sb-elevated, #17243A)',
+          opacity: 1,
+        }}
+        className="px-3.5 py-2.5 rounded-xl border border-sb-primary/70 shadow-2xl text-xs space-y-1 z-[9999] pointer-events-none bg-sb-elevated"
+      >
+        <div className="font-bold text-sb-text flex items-center space-x-1.5">
+          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.payload?.fill || '#38BDF8' }} />
+          <span>{item.name}</span>
+        </div>
         <div className="font-mono text-sb-primary font-bold text-sm">
           {formatCurrency(item.value)}
         </div>
@@ -230,7 +239,10 @@ export const OverviewPage: React.FC = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomPieTooltip />} />
+                <Tooltip 
+                  content={<CustomPieTooltip />} 
+                  wrapperStyle={{ zIndex: 9999, outline: 'none' }}
+                />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute text-center pointer-events-none">
