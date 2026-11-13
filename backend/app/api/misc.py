@@ -119,10 +119,21 @@ def natural_language_query(payload: QueryRequest, db: Session = Depends(get_db))
 def reset_demo_data(db: Session = Depends(get_db)):
     from app.database import Base, engine
     from app.seed.demo_data import seed_database
+    from app.orchestration.workflow import run_investigation
+    from app.models import SourceDocument
+
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     seed_database(db)
-    return {"status": "reset_successful", "message": "Demo database restored to clean initial state."}
+
+    # Pre-seed the primary demo investigation and staged proposals for demonstration
+    run_investigation(db, 2)
+    email_doc = db.query(SourceDocument).filter(SourceDocument.id == 2).first()
+    if email_doc:
+        email_doc.processing_status = "unprocessed"
+        db.commit()
+
+    return {"status": "reset_successful", "message": "Demo database restored to clean initial state with staged approvals."}
 
 @router.post("/demo/scenario/{scenario}")
 def load_scenario(scenario: str, db: Session = Depends(get_db)):

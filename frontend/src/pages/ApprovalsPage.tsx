@@ -22,7 +22,25 @@ export const ApprovalsPage: React.FC = () => {
   const navigate = useNavigate();
   const { data: proposals, loading, refetch } = useApi(() => api.getApprovals());
   const [actingId, setActingId] = useState<number | null>(null);
+  const [resetting, setResetting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'info'; text: string } | null>(null);
+
+  const handleResetApprovals = async () => {
+    try {
+      setResetting(true);
+      await api.resetApprovals();
+      setFeedback({
+        type: 'info',
+        text: 'Demo approvals reset! Staged proposals restored to fresh pending state for demonstration.'
+      });
+      await refetch();
+    } catch (e: any) {
+      console.error(e);
+      setFeedback({ type: 'info', text: `Reset error: ${e?.message || 'Failed to reset approvals'}` });
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const handleApprove = async (id: number) => {
     try {
@@ -84,13 +102,25 @@ export const ApprovalsPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => navigate('/audit')}
-          className="btn-secondary text-xs flex items-center space-x-1.5 self-start"
-        >
-          <span>View Execution Audit Trail</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center space-x-2 self-start">
+          <button
+            onClick={handleResetApprovals}
+            disabled={resetting}
+            className="btn-secondary text-xs flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+            title="Reset demo proposals back to pending authorization state"
+          >
+            <RotateCcw className={`w-3.5 h-3.5 text-sb-warning ${resetting ? 'animate-spin' : ''}`} />
+            <span>{resetting ? 'Resetting Demo...' : 'Reset Demo Approvals'}</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/audit')}
+            className="btn-secondary text-xs flex items-center space-x-1.5"
+          >
+            <span>View Execution Audit Trail</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Action Feedback Banner */}
@@ -142,10 +172,18 @@ export const ApprovalsPage: React.FC = () => {
         </div>
 
         {pending.length === 0 ? (
-          <div className="card p-8 text-center text-xs text-sb-text-secondary space-y-2">
+          <div className="card p-8 text-center text-xs text-sb-text-secondary space-y-3">
             <CheckSquare className="w-8 h-8 text-sb-success mx-auto opacity-80" />
             <div className="font-semibold text-sb-text">All staged proposals have been processed</div>
-            <p>New proposals will appear here when an investigation runs or when contracts update.</p>
+            <p>Ready to show the judges again? Click below to restore the demo proposals.</p>
+            <button
+              onClick={handleResetApprovals}
+              disabled={resetting}
+              className="px-4 py-2 rounded-lg bg-sb-primary text-white hover:bg-sb-primary/90 font-semibold text-xs inline-flex items-center space-x-1.5 shadow-md shadow-sb-primary/20 transition-all cursor-pointer"
+            >
+              <RotateCcw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
+              <span>Restore Demo Approvals</span>
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">

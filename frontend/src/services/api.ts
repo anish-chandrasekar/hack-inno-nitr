@@ -96,6 +96,7 @@ export const api = {
 
   // Demo
   resetDemo: () => request<{ status: string }>('/demo/reset', { method: 'POST' }),
+  resetApprovals: () => request<{ status: string }>('/approvals/reset', { method: 'POST' }),
   loadScenario: (scenario: string) =>
     request<{ status: string }>(`/demo/scenario/${scenario}`, { method: 'POST' }),
 

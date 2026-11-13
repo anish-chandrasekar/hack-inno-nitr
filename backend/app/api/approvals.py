@@ -114,3 +114,23 @@ def reject_proposal(proposal_id: int, payload: ApprovalRequest = None, db: Sessi
     db.add(appr)
     db.commit()
     return {"status": "rejected", "proposal_id": p.id}
+
+@router.post("/approvals/reset")
+def reset_approvals(db: Session = Depends(get_db)):
+    """Reset all approvals and re-stage fresh demo proposals for live presentation."""
+    from app.database import Base, engine
+    from app.seed.demo_data import seed_database
+    from app.orchestration.workflow import run_investigation
+    from app.models import SourceDocument
+
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    seed_database(db)
+
+    run_investigation(db, 2)
+    email_doc = db.query(SourceDocument).filter(SourceDocument.id == 2).first()
+    if email_doc:
+        email_doc.processing_status = "unprocessed"
+        db.commit()
+
+    return {"status": "reset_successful", "message": "Demo proposals successfully reset to initial pending state."}
