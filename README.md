@@ -14,8 +14,7 @@ Unlike ordinary chatbots or static CRUD dashboards, SECOND BRAIN understands **h
 
 ---
 
-## 🏆 Key Differentiators (Why We Win Track B)
-
+## 🏆 Key Differentiators 
 ### Differentiator A: Contextual Organizational Memory
 - Persistent relational context (SQLAlchemy + SQLite) rather than ephemeral prompt windows.
 - Entity resolution engine recognizing aliases (e.g. `NovaTech` ↔ `NovaTech Pvt Ltd` ↔ `Nova Technologies`).
