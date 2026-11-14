@@ -146,6 +146,11 @@ export const ImpactStudioPage: React.FC = () => {
           id: item.id,
           type: item.type || 'sponsorNode',
           position: { x: startX + index * spacingX, y: currentY },
+          width: 220,
+          height: 75,
+          initialWidth: 220,
+          initialHeight: 75,
+          style: { width: 220, height: 75 },
           data: {
             ...item.data,
             label: item.label,
@@ -294,27 +299,30 @@ export const ImpactStudioPage: React.FC = () => {
               style={{
                 width: 220,
                 height: 140,
-                backgroundColor: '#0B1220',
+                backgroundColor: '#0F172A',
               }}
               nodeColor={(node: any) => {
                 const impact = node.data?.impact_level;
-                if (impact === 'high' || impact === 'critical') return '#EF4444';
-                if (impact === 'medium') return '#F59E0B';
+                if (impact === 'direct' || impact === 'critical' || impact === 'high') return '#EF4444';
+                if (impact === 'indirect' || impact === 'medium') return '#F59E0B';
+                if (impact === 'uncertain') return '#818CF8';
                 const type = node.data?.entity_type;
                 if (type === 'sponsor') return '#38BDF8';
-                if (type === 'budget_line') return '#A855F7';
+                if (type === 'commitment') return '#60A5FA';
+                if (type === 'budget_line' || type === 'budget') return '#A855F7';
                 if (type === 'deliverable') return '#22C55E';
-                return '#6366F1';
+                if (type === 'task') return '#EC4899';
+                return '#38BDF8';
               }}
               nodeStrokeColor="#FFFFFF"
               nodeStrokeWidth={2}
               nodeBorderRadius={4}
-              maskColor="rgba(56, 189, 248, 0.15)"
+              maskColor="rgba(56, 189, 248, 0.18)"
               maskStrokeColor="#38BDF8"
               maskStrokeWidth={2}
               zoomable
               pannable
-              className="border-2 border-sb-primary/60 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden !m-3"
+              className="!border-2 !border-sb-primary/60 !rounded-xl !shadow-2xl overflow-hidden !m-3"
             />
           </ReactFlow>
         </div>
