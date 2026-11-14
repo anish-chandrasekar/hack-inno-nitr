@@ -189,7 +189,7 @@ export const InboxPage: React.FC = () => {
                     className="btn-primary text-xs flex items-center space-x-1.5 shadow-lg shadow-sb-primary/20 shrink-0"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>{isProcessing ? 'Agents Running...' : 'Trigger Second Brain Analysis'}</span>
+                    <span>{isProcessing ? 'Agents Running...' : 'Trigger utsavIQ Analysis'}</span>
                   </button>
                 ) : (
                   <button

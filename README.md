@@ -1,4 +1,4 @@
-# SECOND BRAIN
+# utsavIQ
 ## The Context-Aware AI Event Operations and Decision Intelligence Platform
 ### *HackInnovision 2026 | Track B: Agentic Workflow Automation & Context Engineering*
 
@@ -8,9 +8,9 @@
 
 ## 🌟 Executive Summary
 
-**SECOND BRAIN** is an operational intelligence and multi-agent orchestration platform built for high-stakes event management (demonstrated with **INNOVISION 2026**, a ₹10,00,000 college technology and cultural festival).
+**utsavIQ** is an operational intelligence and multi-agent orchestration platform built for high-stakes event management (demonstrated with **INNOVISION 2026**, a ₹10,00,000 college technology and cultural festival).
 
-Unlike ordinary chatbots or static CRUD dashboards, SECOND BRAIN understands **how information is connected across an entire organization**. When a critical sponsor unexpectedly cuts their financial commitment and withdraws delegate merchandise kits midway through event preparation, SECOND BRAIN instantly traverses the organizational dependency graph to assess cascading risks, deterministically recalculates budget deficits, formulates adaptive recovery plans, and gates all high-consequence operations through human authorization before idempotent, independently-verified execution.
+Unlike ordinary chatbots or static CRUD dashboards, utsavIQ understands **how information is connected across an entire organization**. When a critical sponsor unexpectedly cuts their financial commitment and withdraws delegate merchandise kits midway through event preparation, utsavIQ instantly traverses the organizational dependency graph to assess cascading risks, deterministically recalculates budget deficits, formulates adaptive recovery plans, and gates all high-consequence operations through human authorization before idempotent, independently-verified execution.
 
 ---
 

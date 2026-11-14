@@ -4,7 +4,7 @@ import os
 
 class Settings(BaseSettings):
     gemini_api_key: str = ""
-    database_url: str = "sqlite:///./secondbrain.db"
+    database_url: str = "sqlite:///./utsaviq.db"
     environment: str = "demo"
     
     model_config = {"env_file": ".env", "extra": "ignore"}

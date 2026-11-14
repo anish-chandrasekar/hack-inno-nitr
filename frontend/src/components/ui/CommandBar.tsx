@@ -32,7 +32,7 @@ export const CommandBar: React.FC = () => {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ask Second Brain about your event... (e.g. 'How much did NovaTech originally promise?')"
+          placeholder="Ask utsavIQ about your event... (e.g. 'How much did NovaTech originally promise?')"
           className="w-full bg-sb-elevated border border-sb-border rounded-xl pl-11 pr-24 py-3.5 text-sm text-sb-text placeholder-sb-text-secondary focus:outline-none focus:border-sb-primary/60 transition-all shadow-inner"
         />
         <div className="absolute right-3 flex items-center space-x-1.5">
@@ -52,7 +52,7 @@ export const CommandBar: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-sb-primary" />
-              <span className="text-xs font-semibold text-sb-primary uppercase tracking-wider">Second Brain Intelligence</span>
+              <span className="text-xs font-semibold text-sb-primary uppercase tracking-wider">utsavIQ Intelligence</span>
             </div>
             <span className="text-[11px] font-mono text-sb-text-secondary">
               Confidence: {(response.confidence * 100).toFixed(0)}%

@@ -102,7 +102,7 @@ def natural_language_query(payload: QueryRequest, db: Session = Depends(get_db))
             
             pending_props = db.query(Proposal).filter(Proposal.approval_status == "pending").count()
             
-            system_prompt = f"""You are SECOND BRAIN, the Context-Aware AI Event Operations Platform for INNOVISION 2026.
+            system_prompt = f"""You are utsavIQ, the Context-Aware AI Event Operations Platform for INNOVISION 2026.
 Event Context:
 - Event: INNOVISION 2026 (College Annual Tech & Cultural Fest, 3-day event)
 - Total Event Budget Target: ₹10,00,000
@@ -158,7 +158,7 @@ Answer the user query concisely, authoritatively and professionally (2-4 sentenc
         }
     else:
         return {
-            "answer": f"Second Brain evaluated event context for '{payload.query}'. All records are synchronized. For detailed impact analysis, refer to the Impact Studio or execute an investigation from the Inbox.",
+            "answer": f"utsavIQ evaluated event context for '{payload.query}'. All records are synchronized. For detailed impact analysis, refer to the Impact Studio or execute an investigation from the Inbox.",
             "sources": ["Organizational Context Store"],
             "confidence": 0.92
         }

@@ -70,7 +70,7 @@ def approve_proposal(proposal_id: int, payload: ApprovalRequest = None, db: Sess
         proposal_id=p.id,
         reviewer="Organising Secretary (Lead Reviewer)",
         decision="approved",
-        notes=payload.notes if payload else "Approved via Second Brain Command Center",
+        notes=payload.notes if payload else "Approved via utsavIQ Command Center",
         timestamp=datetime.now(timezone.utc)
     )
     db.add(appr)

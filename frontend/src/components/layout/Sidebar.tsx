@@ -33,10 +33,10 @@ export const Sidebar: React.FC = () => {
             <Zap className="w-5 h-5 text-sb-bg font-bold" />
           </div>
           <div>
-            <div className="font-bold text-sb-text tracking-tight flex items-center space-x-1.5">
-              <span>SECOND BRAIN</span>
+            <div className="font-bold text-sb-text tracking-tight flex items-center space-x-1.5 text-base">
+              <span>utsavIQ</span>
             </div>
-            <p className="text-[10px] text-sb-primary font-mono font-medium tracking-wider uppercase">Context Intelligence</p>
+            <p className="text-[10px] text-sb-primary font-mono font-medium tracking-wider uppercase">Event Operations IQ</p>
           </div>
         </div>
       </div>

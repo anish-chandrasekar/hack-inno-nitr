@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="SECOND BRAIN API",
+    title="utsavIQ API",
     description="Context-Aware AI Event Operations and Decision Intelligence Platform",
     version="1.0.0",
     lifespan=lifespan
@@ -53,7 +53,7 @@ app.include_router(misc_router, prefix="/api")
 @app.get("/")
 def root():
     return {
-        "project": "SECOND BRAIN",
+        "project": "utsavIQ",
         "tagline": "One change. Complete context. Intelligent execution.",
         "status": "online",
         "event": "INNOVISION 2026"
