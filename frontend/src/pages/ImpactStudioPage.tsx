@@ -291,17 +291,37 @@ export const ImpactStudioPage: React.FC = () => {
             <Background color="#17243A" gap={16} />
             <Controls className="bg-sb-elevated border border-sb-border fill-sb-text text-sb-text" />
             <MiniMap 
-              nodeStrokeColor="#38BDF8"
-              nodeColor="#111C30"
-              maskColor="rgba(11, 18, 32, 0.8)"
-              className="bg-sb-sidebar border border-sb-border rounded-lg"
+              style={{
+                width: 220,
+                height: 140,
+                backgroundColor: '#0B1220',
+              }}
+              nodeColor={(node: any) => {
+                const impact = node.data?.impact_level;
+                if (impact === 'high' || impact === 'critical') return '#EF4444';
+                if (impact === 'medium') return '#F59E0B';
+                const type = node.data?.entity_type;
+                if (type === 'sponsor') return '#38BDF8';
+                if (type === 'budget_line') return '#A855F7';
+                if (type === 'deliverable') return '#22C55E';
+                return '#6366F1';
+              }}
+              nodeStrokeColor="#FFFFFF"
+              nodeStrokeWidth={2}
+              nodeBorderRadius={4}
+              maskColor="rgba(56, 189, 248, 0.15)"
+              maskStrokeColor="#38BDF8"
+              maskStrokeWidth={2}
+              zoomable
+              pannable
+              className="border-2 border-sb-primary/60 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden !m-3"
             />
           </ReactFlow>
         </div>
 
         {/* Selected Node Details Drawer */}
         {selectedNodeData && (
-          <div className="absolute right-4 bottom-4 w-80 card p-4 bg-sb-elevated/95 border-sb-primary/40 shadow-2xl z-20 space-y-2">
+          <div className="absolute left-4 bottom-4 w-80 card p-4 bg-sb-elevated/95 border-sb-primary/40 shadow-2xl z-20 space-y-2 backdrop-blur-md">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono text-sb-primary uppercase font-bold">
                 {selectedNodeData.entity_type}
